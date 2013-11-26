@@ -13,8 +13,7 @@ VERSION=`cat pom.xml | grep version | head -4 | tail -1 | sed 's_.*<version>\([^
 
 echo Using Version[${VERSION}]
 
-mvn clean
-mvn package
+mvn clean package -DskipTests=true
 
 if [ $? -ne "0" ]; then
     echo "mvn package failed"
@@ -25,9 +24,3 @@ echo " "
 echo "        The following self-contained jars (and more) have been built:"
 echo " "
 find . -name '*-selfcontained.jar'
-echo " "
-echo "For examples, see: "
-echo " "
-ls -1 examples/*/*sh
-echo " "
-echo "See also http://druid.io/docs/0.6.25"

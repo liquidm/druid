@@ -1,7 +1,6 @@
-The best place for more Druid resources is at: http://www.druid.io
+liquidm's stable master [druid](https://github.com/metamx/druid)
+=================================================================
 
-Looking for docs? http://druid.io/docs/latest/
-
-Build with build.sh
-
-Want to get started? http://druid.io/docs/latest/Tutorial:-A-First-Look-at-Druid.html
+- [X] hadoop 1.1.1
+  [X] examples removed
+- [X] tests disabled in build.sh
