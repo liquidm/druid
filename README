@@ -1,6 +1,6 @@
 liquidm's stable master [druid](https://github.com/metamx/druid)
 =================================================================
 
-- [X] hadoop 1.1.1
-  [X] examples removed
-- [X] tests disabled in build.sh
+   - hadoop 1.1.1
+   - examples removed
+   - tests disabled in build.sh
