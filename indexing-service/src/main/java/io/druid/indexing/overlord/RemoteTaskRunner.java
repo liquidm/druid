@@ -751,8 +751,8 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
         }
     );
     sortedWorkers.addAll(zkWorkers.values());
-    final String configMinWorkerVer = (workerSetupData != null && workerSetupData.get() != null) ? workerSetupData.get().getMinVersion() : "0";
-    final String minWorkerVer = configMinWorkerVer == null ? config.getMinWorkerVersion() : configMinWorkerVer;
+    //final String configMinWorkerVer = (workerSetupData != null && workerSetupData.get() != null) ? workerSetupData.get().getMinVersion() : "0";
+    final String minWorkerVer = "0"; //configMinWorkerVer == null ? config.getMinWorkerVersion() : configMinWorkerVer;
 
     for (ZkWorker zkWorker : sortedWorkers) {
       if (zkWorker.canRunTask(task) && zkWorker.isValidVersion(minWorkerVer)) {
