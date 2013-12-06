@@ -500,6 +500,7 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
     catch (Exception e) {
       log.makeAlert("Exception while trying to run task")
          .addData("taskId", taskRunnerWorkItem.getTask().getId())
+         .addData("error", e.toString())
          .emit();
     }
   }
