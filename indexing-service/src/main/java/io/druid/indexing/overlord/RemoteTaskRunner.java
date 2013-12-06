@@ -63,6 +63,8 @@ import org.joda.time.DateTime;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
@@ -498,9 +500,12 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
       }
     }
     catch (Exception e) {
+      StringWriter sw = new StringWriter();
+      PrintWriter pw = new PrintWriter(sw);
+      e.printStackTrace(pw);
       log.makeAlert("Exception while trying to run task")
          .addData("taskId", taskRunnerWorkItem.getTask().getId())
-         .addData("error", e.toString())
+         .addData("trace", sw.toString())
          .emit();
     }
   }
