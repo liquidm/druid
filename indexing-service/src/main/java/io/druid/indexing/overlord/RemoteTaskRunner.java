@@ -499,10 +499,8 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
       }
     }
     catch (Exception e) {
-      log.makeAlert("Exception while trying to run task")
+      log.makeAlert(e, "Exception while trying to run task")
          .addData("taskId", taskRunnerWorkItem.getTask().getId())
-          .addData("error", e.toString())
-         .addData("trace",  ExceptionUtils.getStackTrace(e))
          .emit();
     }
   }
@@ -751,8 +749,8 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
         }
     );
     sortedWorkers.addAll(zkWorkers.values());
-    //final String configMinWorkerVer = (workerSetupData != null && workerSetupData.get() != null) ? workerSetupData.get().getMinVersion() : "0";
-    final String minWorkerVer = "0"; //configMinWorkerVer == null ? config.getMinWorkerVersion() : configMinWorkerVer;
+    final String workerSetupDataMinVer = workerSetupData.get() == null ? null :workerSetupData.get().getMinVersion();
+    final String minWorkerVer = workerSetupDataMinVer == null ? config.getMinWorkerVersion() : workerSetupDataMinVer;
 
     for (ZkWorker zkWorker : sortedWorkers) {
       if (zkWorker.canRunTask(task) && zkWorker.isValidVersion(minWorkerVer)) {
