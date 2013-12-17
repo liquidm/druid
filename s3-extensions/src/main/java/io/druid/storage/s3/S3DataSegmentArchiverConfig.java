@@ -17,23 +17,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.druid.indexing.overlord.config;
+package io.druid.storage.s3;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.druid.db.DbConnectorConfig;
-import org.skife.config.Config;
 
-public abstract class IndexerDbConnectorConfig extends DbConnectorConfig
+public class S3DataSegmentArchiverConfig
 {
-  @JsonProperty("taskTable")
-  @Config("druid.database.taskTable")
-  public abstract String getTaskTable();
+  @JsonProperty
+  public String archiveBucket = "";
 
-  @JsonProperty("taskLockTable")
-  @Config("druid.database.taskLockTable")
-  public abstract String getTaskLockTable();
+  @JsonProperty
+  public String archiveBaseKey = "";
 
-  @JsonProperty("taskLogTable")
-  @Config("druid.database.taskLogTable")
-  public abstract String getTaskLogTable();
+  public String getArchiveBucket()
+  {
+    return archiveBucket;
+  }
+
+  public String getArchiveBaseKey()
+  {
+    return archiveBaseKey;
+  }
 }
