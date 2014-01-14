@@ -23,14 +23,14 @@
     <groupId>io.druid</groupId>
     <artifactId>druid</artifactId>
     <packaging>pom</packaging>
-    <version>0.6.47</version>
+    <version>0.6.48</version>
     <name>druid</name>
     <description>druid</description>
     <scm>
         <connection>scm:git:ssh://git@github.com/metamx/druid.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/metamx/druid.git</developerConnection>
         <url>http://www.github.com/metamx/druid</url>
-        <tag>druid-0.6.47</tag>
+        <tag>druid-0.6.48</tag>
     </scm>
 
     <prerequisites>
@@ -70,12 +70,12 @@
             <dependency>
                 <groupId>com.metamx</groupId>
                 <artifactId>emitter</artifactId>
-                <version>0.2.7</version>
+                <version>0.2.8</version>
             </dependency>
             <dependency>
                 <groupId>com.metamx</groupId>
                 <artifactId>http-client</artifactId>
-                <version>0.8.4</version>
+                <version>0.8.5</version>
             </dependency>
             <dependency>
                 <groupId>com.metamx</groupId>
