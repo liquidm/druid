@@ -32,6 +32,7 @@ import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.metamx.common.IAE;
 import com.metamx.common.ISE;
+import com.metamx.common.exception.FormattedException;
 import com.metamx.common.logger.Logger;
 import io.druid.data.input.InputRow;
 import io.druid.data.input.MapBasedRow;
@@ -206,7 +207,12 @@ public class IncrementalIndex implements Iterable<Row>
                   @Override
                   public float get()
                   {
-                    return in.getFloatMetric(metricName);
+                    try {
+                      return in.getFloatMetric(metricName);
+                    } catch (FormattedException fe) {
+                      log.warn(fe, "Forcing float value to 0 in %s", metricName);
+                      return 0f;
+                    }
                   }
                 };
               }
@@ -229,7 +235,12 @@ public class IncrementalIndex implements Iterable<Row>
                     @Override
                     public Float get()
                     {
-                      return in.getFloatMetric(columnName);
+                      try {
+                        return in.getFloatMetric(columnName);
+                      } catch (FormattedException fe) {
+                        log.warn(fe, "Forcing float value to 0 in %s", columnName);
+                        return 0f;
+                      }
                     }
                   };
                 }
