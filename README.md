@@ -16,8 +16,9 @@ kafka partitions
 it's a bag of hurts, use kafka-repartion.rb to generate an optimal
 partition layout
 
-# cluster layout harded, please adjust
-./kafka-repartion.rb topic
+WARNING: cluster config hardcoded, adjust before using.
 
-# will need -execute
+ ```bash
+./kafka-repartion.rb topic
 ~kafka/bin/kafka-reassign-partitions.sh --zookeeper zk1.dw.lqm.io:2181/kafka --manual-assignment-json-file ./topic.all.json
+```
