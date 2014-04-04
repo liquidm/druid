@@ -181,7 +181,7 @@ public class GroupByQueryEngine
         List<ByteBuffer> unaggregatedBuffers = null;
 
         final DimensionSelector dimSelector = dims.get(0);
-        final IndexedInts row = dimSelector.getRow();
+        final IndexedInts row = dimSelector == null ? null : dimSelector.getRow();
         if (row == null || row.size() == 0) {
           ByteBuffer newKey = key.duplicate();
           newKey.putInt(dimSelector.getValueCardinality());
