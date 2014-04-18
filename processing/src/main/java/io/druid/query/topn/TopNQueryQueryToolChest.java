@@ -64,11 +64,13 @@ import java.util.Map;
 public class TopNQueryQueryToolChest extends QueryToolChest<Result<TopNResultValue>, TopNQuery>
 {
   private static final byte TOPN_QUERY = 0x1;
-
   private static final Joiner COMMA_JOIN = Joiner.on(",");
-  private static final TypeReference<Result<TopNResultValue>> TYPE_REFERENCE = new TypeReference<Result<TopNResultValue>>(){};
-
-  private static final TypeReference<Object> OBJECT_TYPE_REFERENCE = new TypeReference<Object>(){};
+  private static final TypeReference<Result<TopNResultValue>> TYPE_REFERENCE = new TypeReference<Result<TopNResultValue>>()
+  {
+  };
+  private static final TypeReference<Object> OBJECT_TYPE_REFERENCE = new TypeReference<Object>()
+  {
+  };
   private final TopNQueryConfig config;
 
   @Inject
@@ -161,7 +163,12 @@ public class TopNQueryQueryToolChest extends QueryToolChest<Result<TopNResultVal
                       values.put(agg.getName(), fn.manipulate(agg, input.getMetric(agg.getName())));
                     }
                     for (PostAggregator postAgg : query.getPostAggregatorSpecs()) {
-                      values.put(postAgg.getName(), input.getMetric(postAgg.getName()));
+                      Object calculatedPostAgg = input.getMetric(postAgg.getName());
+                      if (calculatedPostAgg != null) {
+                        values.put(postAgg.getName(), calculatedPostAgg);
+                      } else {
+                        values.put(postAgg.getName(), postAgg.compute(values));
+                      }
                     }
                     values.put(dimension, input.getDimensionValue(dimension));
 
@@ -281,10 +288,6 @@ public class TopNQueryQueryToolChest extends QueryToolChest<Result<TopNResultVal
                 vals.put(factory.getName(), factory.deserialize(resultIter.next()));
               }
 
-              for (PostAggregator postAgg : postAggs) {
-                vals.put(postAgg.getName(), postAgg.compute(vals));
-              }
-
               retVal.add(vals);
             }
 
@@ -313,6 +316,11 @@ public class TopNQueryQueryToolChest extends QueryToolChest<Result<TopNResultVal
     return new ThresholdAdjustingQueryRunner(runner, config.getMinTopNThreshold());
   }
 
+  public Ordering<Result<TopNResultValue>> getOrdering()
+  {
+    return Ordering.natural();
+  }
+
   private static class ThresholdAdjustingQueryRunner implements QueryRunner<Result<TopNResultValue>>
   {
     private final QueryRunner<Result<TopNResultValue>> runner;
@@ -339,7 +347,7 @@ public class TopNQueryQueryToolChest extends QueryToolChest<Result<TopNResultVal
         return runner.run(query);
       }
 
-      final boolean isBySegment = Boolean.parseBoolean(query.getContextValue("bySegment", "false"));
+      final boolean isBySegment = query.getContextBySegment(false);
 
       return Sequences.map(
           runner.run(query.withThreshold(minTopNThreshold)),
@@ -396,10 +404,5 @@ public class TopNQueryQueryToolChest extends QueryToolChest<Result<TopNResultVal
           }
       );
     }
-  }
-
-  public Ordering<Result<TopNResultValue>> getOrdering()
-  {
-    return Ordering.natural();
   }
 }

@@ -44,6 +44,7 @@ import io.druid.query.aggregation.AggregatorFactory;
 import io.druid.query.aggregation.BufferAggregator;
 import io.druid.query.aggregation.PostAggregator;
 import io.druid.query.dimension.DimensionSpec;
+import io.druid.query.extraction.DimExtractionFn;
 import io.druid.segment.Cursor;
 import io.druid.segment.DimensionSelector;
 import io.druid.segment.StorageAdapter;
@@ -182,6 +183,7 @@ public class GroupByQueryEngine
 
         final DimensionSelector dimSelector = dims.get(0);
         final IndexedInts row = dimSelector == null ? null : dimSelector.getRow();
+
         if (row == null || row.size() == 0) {
           ByteBuffer newKey = key.duplicate();
           newKey.putInt(dimSelector.getValueCardinality());
@@ -398,9 +400,14 @@ public class GroupByQueryEngine
                   ByteBuffer keyBuffer = input.getKey().duplicate();
                   for (int i = 0; i < dimensions.size(); ++i) {
                     final DimensionSelector dimSelector = dimensions.get(i);
+                    final DimExtractionFn fn = dimensionSpecs.get(i).getDimExtractionFn();
                     final int dimVal = keyBuffer.getInt();
                     if (dimSelector.getValueCardinality() != dimVal) {
-                      theEvent.put(dimNames.get(i), dimSelector.lookupName(dimVal));
+                      if(fn != null) {
+                        theEvent.put(dimNames.get(i), fn.apply(dimSelector.lookupName(dimVal)));
+                      } else {
+                        theEvent.put(dimNames.get(i), dimSelector.lookupName(dimVal));
+                      }
                     }
                   }
 
