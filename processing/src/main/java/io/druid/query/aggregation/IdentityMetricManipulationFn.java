@@ -17,25 +17,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.druid.indexer.partitions;
+package io.druid.query.aggregation;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import javax.annotation.Nullable;
-
-// for backward compatibility
-@Deprecated
-public class RandomPartitionsSpec extends HashedPartitionsSpec
+/**
+ */
+public class IdentityMetricManipulationFn implements MetricManipulationFn
 {
-  @JsonCreator
-  public RandomPartitionsSpec(
-      @JsonProperty("targetPartitionSize") @Nullable Long targetPartitionSize,
-      @JsonProperty("maxPartitionSize") @Nullable Long maxPartitionSize,
-      @JsonProperty("assumeGrouped") @Nullable Boolean assumeGrouped,
-      @JsonProperty("numShards") @Nullable Integer numShards
-  )
+  @Override
+  public Object manipulate(AggregatorFactory factory, Object object)
   {
-    super(targetPartitionSize, maxPartitionSize, assumeGrouped, numShards);
+    return object;
   }
 }
