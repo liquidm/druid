@@ -215,20 +215,23 @@ public class DeterminePartitionsJob implements Jobby
         if (fileSystem == null) {
           fileSystem = partitionInfoPath.getFileSystem(dimSelectionJob.getConfiguration());
         }
-        List<ShardSpec> specs = config.jsonMapper.readValue(
-            Utils.openInputStream(dimSelectionJob, partitionInfoPath), new TypeReference<List<ShardSpec>>()
-        {
+        if (Utils.exists(dimSelectionJob, fileSystem, partitionInfoPath)) {
+          List<ShardSpec> specs = config.jsonMapper.readValue(
+              Utils.openInputStream(dimSelectionJob, partitionInfoPath), new TypeReference<List<ShardSpec>>()
+          {
+          }
+          );
+
+          List<HadoopyShardSpec> actualSpecs = Lists.newArrayListWithExpectedSize(specs.size());
+          for (int i = 0; i < specs.size(); ++i) {
+            actualSpecs.add(new HadoopyShardSpec(specs.get(i), shardCount++));
+            log.info("DateTime[%s], partition[%d], spec[%s]", segmentGranularity, i, actualSpecs.get(i));
+          }
+
+          shardSpecs.put(segmentGranularity.getStart(), actualSpecs);
+        } else {
+          log.info("Path[%s] didn't exist!?", partitionInfoPath);
         }
-        );
-
-        List<HadoopyShardSpec> actualSpecs = Lists.newArrayListWithExpectedSize(specs.size());
-        for (int i = 0; i < specs.size(); ++i) {
-          actualSpecs.add(new HadoopyShardSpec(specs.get(i), shardCount++));
-          log.info("DateTime[%s], partition[%d], spec[%s]", segmentGranularity, i, actualSpecs.get(i));
-        }
-
-        shardSpecs.put(segmentGranularity.getStart(), actualSpecs);
-
       }
       config.setShardSpecs(shardSpecs);
 
@@ -761,8 +764,6 @@ public class DeterminePartitionsJob implements Jobby
       for (ShardSpec shardSpec : chosenShardSpecs) {
         log.info("  %s", HadoopDruidIndexerConfig.jsonMapper.writeValueAsString(shardSpec));
       }
-
-      System.out.println(HadoopDruidIndexerConfig.jsonMapper.writeValueAsString(chosenShardSpecs));
 
       try {
         HadoopDruidIndexerConfig.jsonMapper
