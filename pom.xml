@@ -23,14 +23,14 @@
     <groupId>io.druid</groupId>
     <artifactId>druid</artifactId>
     <packaging>pom</packaging>
-    <version>0.6.105</version>
+    <version>0.6.116</version>
     <name>druid</name>
     <description>druid</description>
     <scm>
         <connection>scm:git:ssh://git@github.com/metamx/druid.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/metamx/druid.git</developerConnection>
         <url>http://www.github.com/metamx/druid</url>
-        <tag>druid-0.6.105</tag>
+        <tag>druid-0.6.116</tag>
     </scm>
 
     <prerequisites>
@@ -39,9 +39,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <metamx.java-util.version>0.25.5</metamx.java-util.version>
+        <metamx.java-util.version>0.25.6</metamx.java-util.version>
         <apache.curator.version>2.4.0</apache.curator.version>
-        <druid.api.version>0.1.11</druid.api.version>
+        <druid.api.version>0.2.3</druid.api.version>
     </properties>
 
     <modules>
@@ -56,7 +56,6 @@
         <module>s3-extensions</module>
         <module>kafka-seven</module>
         <module>kafka-eight</module>
-        <module>hll</module>
     </modules>
 
     <dependencyManagement>
@@ -76,7 +75,7 @@
             <dependency>
                 <groupId>com.metamx</groupId>
                 <artifactId>http-client</artifactId>
-                <version>0.9.4</version>
+                <version>0.9.5</version>
             </dependency>
             <dependency>
                 <groupId>com.metamx</groupId>
@@ -316,17 +315,17 @@
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-server</artifactId>
-                <version>9.1.4.v20140401</version>
+                <version>9.1.5.v20140505</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-servlet</artifactId>
-                <version>9.1.4.v20140401</version>
+                <version>9.1.5.v20140505</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-servlets</artifactId>
-                <version>9.1.4.v20140401</version>
+                <version>9.1.5.v20140505</version>
             </dependency>
             <dependency>
                 <groupId>joda-time</groupId>

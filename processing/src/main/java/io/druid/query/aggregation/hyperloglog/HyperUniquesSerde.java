@@ -92,7 +92,9 @@ public class HyperUniquesSerde extends ComplexMetricSerde
           }
 
           for (String dimensionValue : dimValues) {
-            collector.add(hashFn.hashBytes(dimensionValue.getBytes(Charsets.UTF_8)).asBytes());
+            collector.add(
+                hashFn.hashBytes(dimensionValue.getBytes(Charsets.UTF_8)).asBytes()
+            );
           }
           return collector;
         }

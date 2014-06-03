@@ -31,6 +31,7 @@ import com.metamx.http.client.response.HttpResponseHandler;
 import io.druid.client.RoutingDruidClient;
 import io.druid.guice.annotations.Json;
 import io.druid.guice.annotations.Smile;
+import io.druid.query.DataSourceUtil;
 import io.druid.query.Query;
 import io.druid.server.log.RequestLogger;
 import io.druid.server.router.QueryHostFinder;
@@ -41,6 +42,7 @@ import org.joda.time.DateTime;
 
 import javax.servlet.AsyncContext;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -158,6 +160,15 @@ public class AsyncQueryForwardingServlet extends HttpServlet
 
           return ClientResponse.finished(obj);
         }
+
+        @Override
+        public void exceptionCaught(
+            ClientResponse<OutputStream> clientResponse,
+            Throwable e
+        )
+        {
+          handleException(resp, asyncContext, e);
+        }
       };
 
       asyncContext.start(
@@ -175,23 +186,7 @@ public class AsyncQueryForwardingServlet extends HttpServlet
       req.setAttribute(DISPATCHED, true);
     }
     catch (Exception e) {
-      if (!resp.isCommitted()) {
-        resp.setStatus(500);
-        resp.resetBuffer();
-
-        if (out == null) {
-          out = resp.getOutputStream();
-        }
-
-        if (ctx != null) {
-          ctx.complete();
-        }
-
-        out.write((e.getMessage() == null) ? "Exception null".getBytes(UTF8) : e.getMessage().getBytes(UTF8));
-        out.write("\n".getBytes(UTF8));
-      }
-
-      resp.flushBuffer();
+      handleException(resp, ctx,  e);
     }
   }
 
@@ -282,7 +277,7 @@ public class AsyncQueryForwardingServlet extends HttpServlet
 
           emitter.emit(
               new ServiceMetricEvent.Builder()
-                  .setUser2(theQuery.getDataSource().getName())
+                  .setUser2(DataSourceUtil.getMetricName(theQuery.getDataSource()))
                   .setUser4(theQuery.getType())
                   .setUser5(COMMA_JOIN.join(theQuery.getIntervals()))
                   .setUser6(String.valueOf(theQuery.hasFilters()))
@@ -315,6 +310,15 @@ public class AsyncQueryForwardingServlet extends HttpServlet
 
           return ClientResponse.finished(obj);
         }
+
+        @Override
+        public void exceptionCaught(
+            ClientResponse<OutputStream> clientResponse,
+            Throwable e
+        )
+        {
+          handleException(resp, asyncContext, e);
+        }
       };
 
       asyncContext.start(
@@ -332,23 +336,7 @@ public class AsyncQueryForwardingServlet extends HttpServlet
       req.setAttribute(DISPATCHED, true);
     }
     catch (Exception e) {
-      if (!resp.isCommitted()) {
-        resp.setStatus(500);
-        resp.resetBuffer();
-
-        if (out == null) {
-          out = resp.getOutputStream();
-        }
-
-        out.write((e.getMessage() == null) ? "Exception null".getBytes(UTF8) : e.getMessage().getBytes(UTF8));
-        out.write("\n".getBytes(UTF8));
-      }
-
-      resp.flushBuffer();
-
-      if (ctx != null) {
-        ctx.complete();
-      }
+      handleException(resp, ctx, e);
 
       try {
         requestLogger.log(
@@ -380,5 +368,26 @@ public class AsyncQueryForwardingServlet extends HttpServlet
       return String.format("http://%s%s", host, requestURI);
     }
     return String.format("http://%s%s?%s", host, requestURI, queryString);
+  }
+
+  private static void handleException(HttpServletResponse resp, AsyncContext ctx, Throwable e)
+  {
+    try {
+      final ServletOutputStream out = resp.getOutputStream();
+      if (!resp.isCommitted()) {
+        resp.setStatus(500);
+        resp.resetBuffer();
+        out.write((e.getMessage() == null) ? "Exception null".getBytes(UTF8) : e.getMessage().getBytes(UTF8));
+        out.write("\n".getBytes(UTF8));
+      }
+
+      if (ctx != null) {
+        ctx.complete();
+      }
+      resp.flushBuffer();
+    }
+    catch (IOException e1) {
+      Throwables.propagate(e1);
+    }
   }
 }
