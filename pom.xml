@@ -23,14 +23,14 @@
     <groupId>io.druid</groupId>
     <artifactId>druid</artifactId>
     <packaging>pom</packaging>
-    <version>0.6.121</version>
+    <version>0.6.123</version>
     <name>druid</name>
     <description>druid</description>
     <scm>
         <connection>scm:git:ssh://git@github.com/metamx/druid.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/metamx/druid.git</developerConnection>
         <url>http://www.github.com/metamx/druid</url>
-        <tag>druid-0.6.121</tag>
+        <tag>druid-0.6.123</tag>
     </scm>
 
     <prerequisites>
@@ -75,7 +75,7 @@
             <dependency>
                 <groupId>com.metamx</groupId>
                 <artifactId>http-client</artifactId>
-                <version>0.9.5</version>
+                <version>0.9.6</version>
             </dependency>
             <dependency>
                 <groupId>com.metamx</groupId>
@@ -200,17 +200,17 @@
             <dependency>
                 <groupId>com.google.inject</groupId>
                 <artifactId>guice</artifactId>
-                <version>4.0-beta</version>
+                <version>4.0-beta4</version>
             </dependency>
             <dependency>
                 <groupId>com.google.inject.extensions</groupId>
                 <artifactId>guice-servlet</artifactId>
-                <version>4.0-beta</version>
+                <version>4.0-beta4</version>
             </dependency>
             <dependency>
                 <groupId>com.google.inject.extensions</groupId>
                 <artifactId>guice-multibindings</artifactId>
-                <version>4.0-beta</version>
+                <version>4.0-beta4</version>
             </dependency>
             <dependency>
                 <groupId>com.ibm.icu</groupId>
@@ -276,6 +276,11 @@
                 <groupId>javax.inject</groupId>
                 <artifactId>javax.inject</artifactId>
                 <version>1</version>
+            </dependency>
+            <dependency>
+               <groupId>org.glassfish</groupId>
+               <artifactId>javax.el</artifactId>
+               <version>3.0.0</version>
             </dependency>
             <dependency>
                 <groupId>com.jamesmurty.utils</groupId>
@@ -390,7 +395,14 @@
             <dependency>
                 <groupId>net.java.dev.jets3t</groupId>
                 <artifactId>jets3t</artifactId>
-                <version>0.9.0</version>
+                <version>0.9.1</version>
+                <exclusions>
+                    <exclusion>
+                        <!-- exclude artifact not available in maven central -->
+                        <groupId>com.centerkey.utils</groupId>
+                        <artifactId>barebonesbrowserlaunch</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
