@@ -22,20 +22,16 @@ package io.druid.server;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.google.api.client.repackaged.com.google.common.base.Throwables;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Closeables;
 import com.google.inject.Inject;
-import com.metamx.common.guava.Accumulator;
-import com.metamx.common.guava.Accumulators;
 import com.metamx.common.guava.Sequence;
 import com.metamx.common.guava.Sequences;
 import com.metamx.common.guava.Yielder;
 import com.metamx.common.guava.YieldingAccumulator;
-import com.metamx.common.guava.YieldingAccumulators;
 import com.metamx.emitter.EmittingLogger;
 import com.metamx.emitter.service.ServiceEmitter;
 import com.metamx.emitter.service.ServiceMetricEvent;
@@ -45,13 +41,13 @@ import io.druid.query.DataSourceUtil;
 import io.druid.query.Query;
 import io.druid.query.QueryInterruptedException;
 import io.druid.query.QuerySegmentWalker;
+import io.druid.server.initialization.ServerConfig;
 import io.druid.server.log.RequestLogger;
 import org.joda.time.DateTime;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -59,12 +55,10 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
 import java.util.UUID;
 
 /**
@@ -77,6 +71,7 @@ public class QueryResource
   public static final String APPLICATION_SMILE = "application/smile";
   public static final String APPLICATION_JSON = "application/json";
 
+  private final ServerConfig config;
   private final ObjectMapper jsonMapper;
   private final ObjectMapper smileMapper;
   private final QuerySegmentWalker texasRanger;
@@ -86,6 +81,7 @@ public class QueryResource
 
   @Inject
   public QueryResource(
+      ServerConfig config,
       @Json ObjectMapper jsonMapper,
       @Smile ObjectMapper smileMapper,
       QuerySegmentWalker texasRanger,
@@ -94,6 +90,7 @@ public class QueryResource
       QueryManager queryManager
   )
   {
+    this.config = config;
     this.jsonMapper = jsonMapper.copy();
     this.jsonMapper.getFactory().configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
 
@@ -131,8 +128,8 @@ public class QueryResource
 
     ObjectMapper objectMapper = isSmile ? smileMapper : jsonMapper;
     final ObjectWriter jsonWriter = req.getParameter("pretty") == null
-                              ? objectMapper.writer()
-                              : objectMapper.writerWithDefaultPrettyPrinter();
+                                    ? objectMapper.writer()
+                                    : objectMapper.writerWithDefaultPrettyPrinter();
 
     try {
       requestQuery = ByteStreams.toByteArray(req.getInputStream());
@@ -141,6 +138,14 @@ public class QueryResource
       if (queryId == null) {
         queryId = UUID.randomUUID().toString();
         query = query.withId(queryId);
+      }
+      if (query.getContextValue("timeout") == null) {
+        query = query.withOverriddenContext(
+            ImmutableMap.of(
+                "timeout",
+                config.getMaxIdleTime().toStandardDuration().getMillis()
+            )
+        );
       }
 
       if (log.isDebugEnabled()) {
@@ -173,6 +178,7 @@ public class QueryResource
         emitter.emit(
             new ServiceMetricEvent.Builder()
                 .setUser2(DataSourceUtil.getMetricName(query.getDataSource()))
+                .setUser3(String.valueOf(query.getContextPriority(0)))
                 .setUser4(query.getType())
                 .setUser5(COMMA_JOIN.join(query.getIntervals()))
                 .setUser6(String.valueOf(query.hasFilters()))
@@ -231,10 +237,20 @@ public class QueryResource
                 new DateTime(),
                 req.getRemoteAddr(),
                 query,
-                new QueryStats(ImmutableMap.<String, Object>of("success", false, "interrupted", true, "reason", e.toString()))
+                new QueryStats(
+                    ImmutableMap.<String, Object>of(
+                        "success",
+                        false,
+                        "interrupted",
+                        true,
+                        "reason",
+                        e.toString()
+                    )
+                )
             )
         );
-      } catch (Exception e2) {
+      }
+      catch (Exception e2) {
         log.error(e2, "Unable to log query [%s]!", query);
       }
       return Response.serverError().entity(
