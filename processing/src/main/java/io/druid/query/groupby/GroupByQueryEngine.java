@@ -237,7 +237,7 @@ public class GroupByQueryEngine
     }
   }
 
-  private class PositionMaintainer
+  private static class PositionMaintainer
   {
     private final int[] increments;
     private final int increment;
@@ -285,7 +285,7 @@ public class GroupByQueryEngine
     }
   }
 
-  private class RowIterator implements CloseableIterator<Row>
+  private static class RowIterator implements CloseableIterator<Row>
   {
     private final GroupByQuery query;
     private final Cursor cursor;

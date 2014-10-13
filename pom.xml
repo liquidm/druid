@@ -23,14 +23,14 @@
     <groupId>io.druid</groupId>
     <artifactId>druid</artifactId>
     <packaging>pom</packaging>
-    <version>0.6.153</version>
+    <version>0.6.158</version>
     <name>druid</name>
     <description>druid</description>
     <scm>
         <connection>scm:git:ssh://git@github.com/metamx/druid.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/metamx/druid.git</developerConnection>
         <url>http://www.github.com/metamx/druid</url>
-        <tag>druid-0.6.153</tag>
+        <tag>druid-0.6.158</tag>
     </scm>
 
     <prerequisites>
@@ -39,9 +39,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <metamx.java-util.version>0.26.6</metamx.java-util.version>
+        <metamx.java-util.version>0.26.9</metamx.java-util.version>
         <apache.curator.version>2.6.0</apache.curator.version>
-        <druid.api.version>0.2.8</druid.api.version>
+        <druid.api.version>0.2.14</druid.api.version>
     </properties>
 
     <modules>
@@ -254,6 +254,11 @@
                 <version>2.2.3</version>
             </dependency>
             <dependency>
+                <groupId>com.fasterxml.jackson.jaxrs</groupId>
+                <artifactId>jackson-jaxrs-smile-provider</artifactId>
+                <version>2.2.3</version>
+            </dependency>
+            <dependency>
                 <groupId>org.codehaus.jackson</groupId>
                 <artifactId>jackson-core-asl</artifactId>
                 <version>1.9.13</version>
@@ -321,22 +326,22 @@
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-server</artifactId>
-                <version>9.2.2.v20140723</version>
+                <version>9.2.3.v20140905</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-servlet</artifactId>
-                <version>9.2.2.v20140723</version>
+                <version>9.2.3.v20140905</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-servlets</artifactId>
-                <version>9.2.2.v20140723</version>
+                <version>9.2.3.v20140905</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-proxy</artifactId>
-                <version>9.2.2.v20140723</version>
+                <version>9.2.3.v20140905</version>
             </dependency>
             <dependency>
                 <groupId>joda-time</groupId>
