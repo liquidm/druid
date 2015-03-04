@@ -26,7 +26,7 @@
     <parent>
         <groupId>io.druid</groupId>
         <artifactId>druid</artifactId>
-        <version>0.7.0</version>
+        <version>0.7.1-SNAPSHOT</version>
     </parent>
 
     <dependencies>
@@ -149,6 +149,11 @@
             <groupId>com.metamx</groupId>
             <artifactId>java-util</artifactId>
             <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-all</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
