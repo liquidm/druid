@@ -17,6 +17,11 @@
 
 package io.druid.indexing.firehose;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.AnnotationIntrospectorPair;
+import com.fasterxml.jackson.databind.introspect.GuiceAnnotationIntrospector;
+import com.fasterxml.jackson.databind.introspect.GuiceInjectableValues;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.api.client.repackaged.com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -40,6 +45,7 @@ import io.druid.data.input.impl.MapInputRowParser;
 import io.druid.data.input.impl.SpatialDimensionSchema;
 import io.druid.data.input.impl.TimestampSpec;
 import io.druid.granularity.QueryGranularity;
+import io.druid.guice.GuiceInjectors;
 import io.druid.indexing.common.SegmentLoaderFactory;
 import io.druid.indexing.common.TaskToolboxFactory;
 import io.druid.indexing.common.actions.LocalTaskActionClientFactory;
@@ -55,16 +61,17 @@ import io.druid.query.aggregation.DoubleSumAggregatorFactory;
 import io.druid.query.aggregation.LongSumAggregatorFactory;
 import io.druid.query.filter.SelectorDimFilter;
 import io.druid.segment.IndexMerger;
+import io.druid.segment.IndexSpec;
 import io.druid.segment.incremental.IncrementalIndexSchema;
 import io.druid.segment.incremental.OnheapIncrementalIndex;
 import io.druid.segment.loading.DataSegmentArchiver;
 import io.druid.segment.loading.DataSegmentKiller;
 import io.druid.segment.loading.DataSegmentMover;
-import io.druid.segment.loading.DataSegmentPuller;
 import io.druid.segment.loading.DataSegmentPusher;
 import io.druid.segment.loading.LocalDataSegmentPuller;
-import io.druid.segment.loading.OmniSegmentLoader;
+import io.druid.segment.loading.LocalLoadSpec;
 import io.druid.segment.loading.SegmentLoaderConfig;
+import io.druid.segment.loading.SegmentLoaderLocalCacheManager;
 import io.druid.segment.loading.SegmentLoadingException;
 import io.druid.segment.loading.StorageLocationConfig;
 import io.druid.timeline.DataSegment;
@@ -94,9 +101,11 @@ import java.util.Set;
 @RunWith(Parameterized.class)
 public class IngestSegmentFirehoseFactoryTest
 {
+
   @Parameterized.Parameters(name = "{1}")
   public static Collection<Object[]> constructorFeeder() throws IOException
   {
+    final IndexSpec indexSpec = new IndexSpec();
 
     final HeapMemoryTaskStorage ts = new HeapMemoryTaskStorage(
         new TaskStorageConfig(null)
@@ -126,7 +135,7 @@ public class IngestSegmentFirehoseFactoryTest
     if (!persistDir.mkdirs() && !persistDir.exists()) {
       throw new IOException(String.format("Could not create directory at [%s]", persistDir.getAbsolutePath()));
     }
-    IndexMerger.persist(index, persistDir);
+    IndexMerger.persist(index, persistDir, indexSpec);
 
     final TaskLockbox tl = new TaskLockbox(ts);
     final IndexerSQLMetadataStorageCoordinator mdc = new IndexerSQLMetadataStorageCoordinator(null, null, null)
@@ -168,6 +177,37 @@ public class IngestSegmentFirehoseFactoryTest
     final LocalTaskActionClientFactory tac = new LocalTaskActionClientFactory(
         ts,
         new TaskActionToolbox(tl, mdc, newMockEmitter())
+    );
+
+    final ObjectMapper objectMapper = new DefaultObjectMapper();
+    objectMapper.registerModule(
+        new SimpleModule("testModule").registerSubtypes(LocalLoadSpec.class)
+    );
+
+    final GuiceAnnotationIntrospector guiceIntrospector = new GuiceAnnotationIntrospector();
+    objectMapper.setAnnotationIntrospectors(
+        new AnnotationIntrospectorPair(
+            guiceIntrospector, objectMapper.getSerializationConfig().getAnnotationIntrospector()
+        ),
+        new AnnotationIntrospectorPair(
+            guiceIntrospector, objectMapper.getDeserializationConfig().getAnnotationIntrospector()
+        )
+    );
+    objectMapper.setInjectableValues(
+        new GuiceInjectableValues(
+            GuiceInjectors.makeStartupInjectorWithModules(
+                ImmutableList.of(
+                    new Module()
+                    {
+                      @Override
+                      public void configure(Binder binder)
+                      {
+                        binder.bind(LocalDataSegmentPuller.class);
+                      }
+                    }
+                )
+            )
+        )
     );
     final TaskToolboxFactory taskToolboxFactory = new TaskToolboxFactory(
         new TaskConfig(tmpDir.getAbsolutePath(), null, null, 50000, null),
@@ -224,11 +264,7 @@ public class IngestSegmentFirehoseFactoryTest
         null, // query executor service
         null, // monitor scheduler
         new SegmentLoaderFactory(
-            new OmniSegmentLoader(
-                ImmutableMap.<String, DataSegmentPuller>of(
-                    "local",
-                    new LocalDataSegmentPuller()
-                ),
+            new SegmentLoaderLocalCacheManager(
                 null,
                 new SegmentLoaderConfig()
                 {
@@ -237,17 +273,17 @@ public class IngestSegmentFirehoseFactoryTest
                   {
                     return Lists.newArrayList();
                   }
-                }
+                }, objectMapper
             )
         ),
-        new DefaultObjectMapper()
+        objectMapper
     );
     Collection<Object[]> values = new LinkedList<>();
     for (InputRowParser parser : Arrays.<InputRowParser>asList(
         ROW_PARSER,
         new MapInputRowParser(
             new JSONParseSpec(
-                new TimestampSpec(TIME_COLUMN, "auto"),
+                new TimestampSpec(TIME_COLUMN, "auto", null),
                 new DimensionsSpec(
                     ImmutableList.<String>of(),
                     ImmutableList.of(DIM_FLOAT_NAME, DIM_LONG_NAME),
@@ -316,7 +352,7 @@ public class IngestSegmentFirehoseFactoryTest
   private static final String DIM_FLOAT_NAME = "testDimFloatName";
   private static final String METRIC_LONG_NAME = "testLongMetric";
   private static final String METRIC_FLOAT_NAME = "testFloatMetric";
-  private static final Long METRIC_LONG_VALUE = 1l;
+  private static final Long METRIC_LONG_VALUE = 1L;
   private static final Float METRIC_FLOAT_VALUE = 1.0f;
   private static final String TIME_COLUMN = "ts";
   private static final Integer MAX_SHARD_NUMBER = 10;
@@ -330,7 +366,7 @@ public class IngestSegmentFirehoseFactoryTest
 
   private static final InputRowParser<Map<String, Object>> ROW_PARSER = new MapInputRowParser(
       new JSONParseSpec(
-          new TimestampSpec(TIME_COLUMN, "auto"),
+          new TimestampSpec(TIME_COLUMN, "auto", null),
           new DimensionsSpec(
               ImmutableList.of(DIM_NAME),
               ImmutableList.of(DIM_FLOAT_NAME, DIM_LONG_NAME),
@@ -368,7 +404,7 @@ public class IngestSegmentFirehoseFactoryTest
             MAX_SHARD_NUMBER
         ),
         BINARY_VERSION,
-        0l
+        0L
     );
   }
 

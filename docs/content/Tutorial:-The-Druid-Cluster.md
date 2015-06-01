@@ -45,11 +45,10 @@ CREATE DATABASE druid DEFAULT CHARACTER SET utf8;
 
 #### Set up Zookeeper
 
-```bash
-Download zookeeper from [http://www.apache.org/dyn/closer.cgi/zookeeper/](http://www.apache.org/dyn/closer.cgi/zookeeper/)
-Install zookeeper.
+* Download zookeeper from [http://www.apache.org/dyn/closer.cgi/zookeeper/](http://www.apache.org/dyn/closer.cgi/zookeeper/)
+* Install zookeeper.
 
-e.g.
+```bash
 curl http://www.gtlib.gatech.edu/pub/apache/zookeeper/zookeeper-3.4.6/zookeeper-3.4.6.tar.gz -o zookeeper-3.4.6.tar.gz
 tar xzf zookeeper-3.4.6.tar.gz
 cd zookeeper-3.4.6
@@ -60,7 +59,7 @@ cd ..
 
 ## The Data
 
-Similar to the first tutorial, the data we will be loading is based on edits that have occurred on Wikipedia. Every time someone edits a page in Wikipedia, metadata is generated about the editor and edited page. Druid collects each individual event and packages them together in a container known as a [segment](Segments.html). Segments contain data over some span of time. We've prebuilt a segment for this tutorial and will cover making your own segments in other [pages](Tutorial%3A-Loading-Your-Data-Part-1.html).The segment we are going to work with has the following format:
+Similar to the first tutorial, the data we will be loading is based on edits that have occurred on Wikipedia. Every time someone edits a page in Wikipedia, metadata is generated about the editor and edited page. Druid collects each individual event and packages them together in a container known as a [segment](Segments.html). Segments contain data over some span of time. We've prebuilt a segment for this tutorial and will cover making your own segments in other [pages](Tutorial%3A-Loading-Streaming-Data.html).The segment we are going to work with has the following format:
 
 Dimensions (things to filter on):
 
