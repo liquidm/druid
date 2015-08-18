@@ -126,7 +126,6 @@ public class DeterminePartitionsJob implements Jobby
         );
 
         JobHelper.injectSystemProperties(groupByJob);
-        JobHelper.setInputFormat(groupByJob, config);
         groupByJob.setMapperClass(DeterminePartitionsGroupByMapper.class);
         groupByJob.setMapOutputKeyClass(BytesWritable.class);
         groupByJob.setMapOutputValueClass(NullWritable.class);
@@ -173,7 +172,6 @@ public class DeterminePartitionsJob implements Jobby
       } else {
         // Directly read the source data, since we assume it's already grouped.
         dimSelectionJob.setMapperClass(DeterminePartitionsDimSelectionAssumeGroupedMapper.class);
-        JobHelper.setInputFormat(dimSelectionJob, config);
         config.addInputPaths(dimSelectionJob);
       }
 
@@ -259,7 +257,7 @@ public class DeterminePartitionsJob implements Jobby
     @Override
     protected void innerMap(
         InputRow inputRow,
-        Writable value,
+        Object value,
         Context context
     ) throws IOException, InterruptedException
     {
@@ -340,7 +338,7 @@ public class DeterminePartitionsJob implements Jobby
     @Override
     protected void innerMap(
         InputRow inputRow,
-        Writable value,
+        Object value,
         Context context
     ) throws IOException, InterruptedException
     {
@@ -378,7 +376,7 @@ public class DeterminePartitionsJob implements Jobby
     }
 
     public void emitDimValueCounts(
-        TaskInputOutputContext<? extends Writable, ? extends Writable, BytesWritable, Text> context,
+        TaskInputOutputContext<?, ?, BytesWritable, Text> context,
         DateTime timestamp,
         Map<String, Iterable<String>> dims
     ) throws IOException, InterruptedException
@@ -891,7 +889,7 @@ public class DeterminePartitionsJob implements Jobby
   }
 
   private static void write(
-      TaskInputOutputContext<? extends Writable, ? extends Writable, BytesWritable, Text> context,
+      TaskInputOutputContext<?, ?, BytesWritable, Text> context,
       final byte[] groupKey,
       DimValueCount dimValueCount
   )

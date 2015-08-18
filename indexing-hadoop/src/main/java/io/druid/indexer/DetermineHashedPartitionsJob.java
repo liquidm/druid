@@ -88,7 +88,6 @@ public class DetermineHashedPartitionsJob implements Jobby
       );
 
       JobHelper.injectSystemProperties(groupByJob);
-      JobHelper.setInputFormat(groupByJob, config);
       groupByJob.setMapperClass(DetermineCardinalityMapper.class);
       groupByJob.setMapOutputKeyClass(LongWritable.class);
       groupByJob.setMapOutputValueClass(BytesWritable.class);
@@ -235,7 +234,7 @@ public class DetermineHashedPartitionsJob implements Jobby
     @Override
     protected void innerMap(
         InputRow inputRow,
-        Writable value,
+        Object value,
         Context context
     ) throws IOException, InterruptedException
     {
