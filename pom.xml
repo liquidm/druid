@@ -58,10 +58,10 @@
     <inceptionYear>2011</inceptionYear>
 
     <scm>
-        <connection>scm:git:ssh://git@github.com/druid-io/druid.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/druid-io/druid.git</developerConnection>
-        <url>https://github.com/druid-io/druid.git</url>
-        <tag>druid-0.8.0</tag>
+        <connection>scm:git:ssh://git@github.com/liquidm/druid.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/liquidm/druid.git</developerConnection>
+        <url>https://github.com/liquidm/druid.git</url>
+        <tag>production</tag>
     </scm>
 
     <properties>
