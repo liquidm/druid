@@ -609,6 +609,9 @@ public class IndexIO
 
         return index;
       }
+      catch (IOException ex) {
+        throw new IOException("Failed to read metadata", ex);
+      }
     }
 
     private Column deserializeColumn(ObjectMapper mapper, ByteBuffer byteBuffer, SmooshedFileMapper smooshedFiles)
