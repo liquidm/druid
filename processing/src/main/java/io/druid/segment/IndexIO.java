@@ -610,7 +610,8 @@ public class IndexIO
         return index;
       }
       catch (IOException ex) {
-        throw new IOException("Failed to read metadata", ex);
+        log.warn(ex, "Failed to load files");
+        throw new IOException("Failed to load files", ex);
       }
     }
 
