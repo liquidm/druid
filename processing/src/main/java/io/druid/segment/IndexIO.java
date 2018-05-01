@@ -543,78 +543,83 @@ public class IndexIO
         throw new IAE("Expected version[9], got[%d]", theVersion);
       }
 
-      SmooshedFileMapper smooshedFiles = Smoosh.map(inDir);
+      try (SmooshedFileMapper smooshedFiles = Smoosh.map(inDir)) {
 
-      ByteBuffer indexBuffer = smooshedFiles.mapFile("index.drd");
-      /**
-       * Index.drd should consist of the segment version, the columns and dimensions of the segment as generic
-       * indexes, the interval start and end millis as longs (in 16 bytes), and a bitmap index type.
-       */
-      final GenericIndexed<String> cols = GenericIndexed.read(
-          indexBuffer,
-          GenericIndexed.STRING_STRATEGY,
-          smooshedFiles
-      );
-      final GenericIndexed<String> dims = GenericIndexed.read(
-          indexBuffer,
-          GenericIndexed.STRING_STRATEGY,
-          smooshedFiles
-      );
-      final Interval dataInterval = Intervals.utc(indexBuffer.getLong(), indexBuffer.getLong());
-      final BitmapSerdeFactory segmentBitmapSerdeFactory;
+        ByteBuffer indexBuffer = smooshedFiles.mapFile("index.drd");
+        /**
+         * Index.drd should consist of the segment version, the columns and dimensions of the segment as generic
+         * indexes, the interval start and end millis as longs (in 16 bytes), and a bitmap index type.
+         */
+        final GenericIndexed<String> cols = GenericIndexed.read(
+                indexBuffer,
+                GenericIndexed.STRING_STRATEGY,
+                smooshedFiles
+        );
+        final GenericIndexed<String> dims = GenericIndexed.read(
+                indexBuffer,
+                GenericIndexed.STRING_STRATEGY,
+                smooshedFiles
+        );
+        final Interval dataInterval = Intervals.utc(indexBuffer.getLong(), indexBuffer.getLong());
+        final BitmapSerdeFactory segmentBitmapSerdeFactory;
 
-      /**
-       * This is a workaround for the fact that in v8 segments, we have no information about the type of bitmap
-       * index to use. Since we cannot very cleanly build v9 segments directly, we are using a workaround where
-       * this information is appended to the end of index.drd.
-       */
-      if (indexBuffer.hasRemaining()) {
-        segmentBitmapSerdeFactory = mapper.readValue(serializerUtils.readString(indexBuffer), BitmapSerdeFactory.class);
-      } else {
-        segmentBitmapSerdeFactory = new BitmapSerde.LegacyBitmapSerdeFactory();
-      }
-
-      Metadata metadata = null;
-      ByteBuffer metadataBB = smooshedFiles.mapFile("metadata.drd");
-      if (metadataBB != null) {
-        try {
-          metadata = mapper.readValue(
-              serializerUtils.readBytes(metadataBB, metadataBB.remaining()),
-              Metadata.class
-          );
+        /**
+         * This is a workaround for the fact that in v8 segments, we have no information about the type of bitmap
+         * index to use. Since we cannot very cleanly build v9 segments directly, we are using a workaround where
+         * this information is appended to the end of index.drd.
+         */
+        if (indexBuffer.hasRemaining()) {
+          segmentBitmapSerdeFactory = mapper.readValue(serializerUtils.readString(indexBuffer), BitmapSerdeFactory.class);
+        } else {
+          segmentBitmapSerdeFactory = new BitmapSerde.LegacyBitmapSerdeFactory();
         }
-        catch (JsonParseException | JsonMappingException ex) {
-          // Any jackson deserialization errors are ignored e.g. if metadata contains some aggregator which
-          // is no longer supported then it is OK to not use the metadata instead of failing segment loading
-          log.warn(ex, "Failed to load metadata for segment [%s]", inDir);
+
+        Metadata metadata = null;
+        ByteBuffer metadataBB = smooshedFiles.mapFile("metadata.drd");
+        if (metadataBB != null) {
+          try {
+            metadata = mapper.readValue(
+                    serializerUtils.readBytes(metadataBB, metadataBB.remaining()),
+                    Metadata.class
+            );
+          }
+          catch (JsonParseException | JsonMappingException ex) {
+            // Any jackson deserialization errors are ignored e.g. if metadata contains some aggregator which
+            // is no longer supported then it is OK to not use the metadata instead of failing segment loading
+            log.warn(ex, "Failed to load metadata for segment [%s]", inDir);
+          }
+          catch (IOException ex) {
+            throw new IOException("Failed to read metadata", ex);
+          }
         }
-        catch (IOException ex) {
-          throw new IOException("Failed to read metadata", ex);
+
+        Map<String, Column> columns = Maps.newHashMap();
+
+        for (String columnName : cols) {
+          columns.put(columnName, deserializeColumn(mapper, smooshedFiles.mapFile(columnName), smooshedFiles));
         }
+
+        columns.put(Column.TIME_COLUMN_NAME, deserializeColumn(mapper, smooshedFiles.mapFile("__time"), smooshedFiles));
+
+        final QueryableIndex index = new SimpleQueryableIndex(
+                dataInterval, cols, dims, segmentBitmapSerdeFactory.getBitmapFactory(), columns, smooshedFiles, metadata
+        );
+
+        log.debug("Mapped v9 index[%s] in %,d millis", inDir, System.currentTimeMillis() - startTime);
+
+        return index;
       }
-
-      Map<String, Column> columns = Maps.newHashMap();
-
-      for (String columnName : cols) {
-        columns.put(columnName, deserializeColumn(mapper, smooshedFiles.mapFile(columnName), smooshedFiles));
+      catch (IOException ex) {
+        log.warn(ex, "Failed to load files");
+        throw new IOException("Failed to load files", ex);
       }
-
-      columns.put(Column.TIME_COLUMN_NAME, deserializeColumn(mapper, smooshedFiles.mapFile("__time"), smooshedFiles));
-
-      final QueryableIndex index = new SimpleQueryableIndex(
-          dataInterval, cols, dims, segmentBitmapSerdeFactory.getBitmapFactory(), columns, smooshedFiles, metadata
-      );
-
-      log.debug("Mapped v9 index[%s] in %,d millis", inDir, System.currentTimeMillis() - startTime);
-
-      return index;
     }
 
     private Column deserializeColumn(ObjectMapper mapper, ByteBuffer byteBuffer, SmooshedFileMapper smooshedFiles)
-        throws IOException
+            throws IOException
     {
       ColumnDescriptor serde = mapper.readValue(
-          serializerUtils.readString(byteBuffer), ColumnDescriptor.class
+              serializerUtils.readString(byteBuffer), ColumnDescriptor.class
       );
       return serde.read(byteBuffer, columnConfig, smooshedFiles);
     }
