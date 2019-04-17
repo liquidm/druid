@@ -14,6 +14,8 @@ steps:
   image: registry.build.lqm.io/dind
   environment:
     DOCKER_HOST: docker:2375
+    DOCKER_CONFIG_JSON:
+      from_secret: DOCKER_CONFIG_JSON
     GSUTIL_CONFIG_JSON:
       from_secret: GSUTIL_CONFIG_JSON
   commands:
