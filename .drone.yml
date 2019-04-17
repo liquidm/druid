@@ -2,7 +2,7 @@ kind: pipeline
 name: default
 
 image_pull_secrets:
-  - DOCKER_CONFIG_JSON
+- DOCKER_CONFIG_JSON
 
 steps:
 - name: docker
@@ -17,5 +17,6 @@ steps:
     GSUTIL_CONFIG_JSON:
       from_secret: GSUTIL_CONFIG_JSON
   commands:
+  - docker-login.sh
   - gsutil-login.sh
   - make publish-artifact
