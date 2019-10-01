@@ -21,8 +21,7 @@ WORKDIR /tmp/druid
 
 COPY . .
 
-RUN export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 \
-      && java -version \
+RUN update-java-alternatives  -s java-1.8.0-openjdk-amd64 \
       && mvn clean install -DskipTests -Pdist,bundle-contrib-exts --quiet
 
 CMD ./cmd.sh
