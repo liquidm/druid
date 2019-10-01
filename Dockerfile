@@ -21,9 +21,8 @@ WORKDIR /tmp/druid
 
 COPY . .
 
-RUN ls -l /usr/lib/jvm/
-RUN export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
-RUN java -version
-RUN mvn clean install -DskipTests -Pdist,bundle-contrib-exts --quiet
+RUN export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 \
+      && java -version \
+      && mvn clean install -DskipTests -Pdist,bundle-contrib-exts --quiet
 
 CMD ./cmd.sh
