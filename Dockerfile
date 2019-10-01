@@ -21,6 +21,7 @@ WORKDIR /tmp/druid
 
 COPY . .
 
+RUN java -version
 RUN mvn clean install -DskipTests -Pdist,bundle-contrib-exts --quiet
 
 CMD ./cmd.sh
