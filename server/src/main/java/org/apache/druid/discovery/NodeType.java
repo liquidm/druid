@@ -56,13 +56,4 @@ public enum NodeType
   {
     return jsonName;
   }
-
-  /**
-   * retain true backwards compatibility with 0.13
-   */
-  @Override
-  public String toString()
-  {
-    return jsonName;
-  }
 }

@@ -55,6 +55,13 @@ public class CuratorDruidNodeAnnouncer implements DruidNodeAnnouncer
     try {
       log.info("Announcing [%s].", discoveryDruidNode);
 
+      String legacyPath = ZKPaths.makePath(
+          config.getInternalDiscoveryPath(),
+          discoveryDruidNode.getNodeType().getJsonName(),
+          discoveryDruidNode.getDruidNode().getHostAndPortToUse()
+      );
+      announcer.announce(legacyPath, jsonMapper.writeValueAsBytes(discoveryDruidNode));
+
       String path = ZKPaths.makePath(
           config.getInternalDiscoveryPath(),
           discoveryDruidNode.getNodeType().toString(),
@@ -73,6 +80,13 @@ public class CuratorDruidNodeAnnouncer implements DruidNodeAnnouncer
   public void unannounce(DiscoveryDruidNode discoveryDruidNode)
   {
     log.info("Unannouncing [%s].", discoveryDruidNode);
+
+    String legacyPath = ZKPaths.makePath(
+        config.getInternalDiscoveryPath(),
+        discoveryDruidNode.getNodeType().getJsonName(),
+        discoveryDruidNode.getDruidNode().getHostAndPortToUse()
+    );
+    announcer.unannounce(legacyPath);
 
     String path = ZKPaths.makePath(
         config.getInternalDiscoveryPath(),
