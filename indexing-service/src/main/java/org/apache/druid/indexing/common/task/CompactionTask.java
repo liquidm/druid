@@ -262,7 +262,10 @@ public class CompactionTask extends AbstractBatchIndexTask
 
   @JsonProperty
   @Nullable
-  public Granularity getQueryGranularity() { return queryGranularity; }
+  public Granularity getQueryGranularity()
+  {
+    return queryGranularity;
+  }
 
   @Nullable
   @JsonProperty
