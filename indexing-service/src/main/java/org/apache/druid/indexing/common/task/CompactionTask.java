@@ -130,6 +130,8 @@ public class CompactionTask extends AbstractBatchIndexTask
   @Nullable
   private final Granularity segmentGranularity;
   @Nullable
+  private final Granularity queryGranularity;
+  @Nullable
   private final Long targetCompactionSizeBytes;
   @Nullable
   private final IndexTuningConfig tuningConfig;
@@ -182,6 +184,7 @@ public class CompactionTask extends AbstractBatchIndexTask
       @JsonProperty("dimensionsSpec") @Nullable final DimensionsSpec dimensionsSpec,
       @JsonProperty("metricsSpec") @Nullable final AggregatorFactory[] metricsSpec,
       @JsonProperty("segmentGranularity") @Nullable final Granularity segmentGranularity,
+      @JsonProperty("queryGranularity") @Nullable final Granularity queryGranularity,
       @JsonProperty("targetCompactionSizeBytes") @Nullable final Long targetCompactionSizeBytes,
       @JsonProperty("tuningConfig") @Nullable final IndexTuningConfig tuningConfig,
       @JsonProperty("context") @Nullable final Map<String, Object> context,
@@ -208,6 +211,7 @@ public class CompactionTask extends AbstractBatchIndexTask
     this.dimensionsSpec = dimensionsSpec == null ? dimensions : dimensionsSpec;
     this.metricsSpec = metricsSpec;
     this.segmentGranularity = segmentGranularity;
+    this.queryGranularity = queryGranularity;
     this.targetCompactionSizeBytes = targetCompactionSizeBytes;
     this.tuningConfig = tuningConfig;
     this.jsonMapper = jsonMapper;
@@ -255,6 +259,10 @@ public class CompactionTask extends AbstractBatchIndexTask
   {
     return segmentGranularity;
   }
+
+  @JsonProperty
+  @Nullable
+  public Granularity getQueryGranularity() { return queryGranularity; }
 
   @Nullable
   @JsonProperty
@@ -319,6 +327,7 @@ public class CompactionTask extends AbstractBatchIndexTask
           dimensionsSpec,
           metricsSpec,
           segmentGranularity,
+          queryGranularity,
           jsonMapper,
           coordinatorClient,
           segmentLoaderFactory,
@@ -406,6 +415,7 @@ public class CompactionTask extends AbstractBatchIndexTask
       @Nullable final DimensionsSpec dimensionsSpec,
       @Nullable final AggregatorFactory[] metricsSpec,
       @Nullable final Granularity segmentGranularity,
+      @Nullable final Granularity queryGranularity,
       final ObjectMapper jsonMapper,
       final CoordinatorClient coordinatorClient,
       final SegmentLoaderFactory segmentLoaderFactory,
@@ -456,6 +466,7 @@ public class CompactionTask extends AbstractBatchIndexTask
             dimensionsSpec,
             metricsSpec,
             GranularityType.fromPeriod(interval.toPeriod()).getDefaultGranularity(),
+            queryGranularity,
             jsonMapper
         );
 
@@ -484,6 +495,7 @@ public class CompactionTask extends AbstractBatchIndexTask
           dimensionsSpec,
           metricsSpec,
           segmentGranularity,
+          queryGranularity,
           jsonMapper
       );
 
@@ -551,6 +563,7 @@ public class CompactionTask extends AbstractBatchIndexTask
       @Nullable DimensionsSpec dimensionsSpec,
       @Nullable AggregatorFactory[] metricsSpec,
       Granularity segmentGranularity,
+      Granularity queryGranularity,
       ObjectMapper jsonMapper
   )
   {
@@ -576,7 +589,7 @@ public class CompactionTask extends AbstractBatchIndexTask
 
     final GranularitySpec granularitySpec = new UniformGranularitySpec(
         Preconditions.checkNotNull(segmentGranularity),
-        Granularities.NONE,
+        (queryGranularity != null) ? queryGranularity : Granularities.NONE,
         rollup,
         Collections.singletonList(totalInterval)
     );
@@ -963,6 +976,8 @@ public class CompactionTask extends AbstractBatchIndexTask
     @Nullable
     private Granularity segmentGranularity;
     @Nullable
+    private Granularity queryGranularity;
+    @Nullable
     private Long targetCompactionSizeBytes;
     @Nullable
     private IndexTuningConfig tuningConfig;
@@ -1022,6 +1037,12 @@ public class CompactionTask extends AbstractBatchIndexTask
       return this;
     }
 
+    public Builder queryGranularity(Granularity queryGranularity)
+    {
+      this.queryGranularity = queryGranularity;
+      return this;
+    }
+
     public Builder targetCompactionSizeBytes(long targetCompactionSizeBytes)
     {
       this.targetCompactionSizeBytes = targetCompactionSizeBytes;
@@ -1052,6 +1073,7 @@ public class CompactionTask extends AbstractBatchIndexTask
           dimensionsSpec,
           metricsSpec,
           segmentGranularity,
+          queryGranularity,
           targetCompactionSizeBytes,
           tuningConfig,
           context,
