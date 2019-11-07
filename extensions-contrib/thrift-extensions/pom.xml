@@ -151,7 +151,7 @@
       <plugin>
         <groupId>com.twitter</groupId>
         <artifactId>scrooge-maven-plugin</artifactId>
-        <version>4.11.0</version>
+        <version>19.10.0</version>
         <configuration>
           <language>java</language>
         </configuration>
