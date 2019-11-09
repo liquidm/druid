@@ -111,7 +111,7 @@ public interface DataSegmentPusher
         segment.getVersion(),
         segment.getShardSpec().getPartitionNum(),
         useUniquePath ? generateUniquePath() : null
-    );
+    ).replace(':', '_');
   }
 
   static String getDefaultStorageDirWithExistingUniquePath(DataSegment segment, String uniquePath)
@@ -122,7 +122,7 @@ public interface DataSegmentPusher
         segment.getVersion(),
         segment.getShardSpec().getPartitionNum(),
         uniquePath
-    );
+    ).replace(':', '_');
   }
 
   static String generateUniquePath()
