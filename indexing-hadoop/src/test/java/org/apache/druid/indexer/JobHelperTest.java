@@ -19,6 +19,7 @@
 
 package org.apache.druid.indexer;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.druid.data.input.impl.CSVParseSpec;
@@ -28,11 +29,13 @@ import org.apache.druid.data.input.impl.TimestampSpec;
 import org.apache.druid.java.util.common.CompressionUtilsTest;
 import org.apache.druid.java.util.common.ISE;
 import org.apache.druid.java.util.common.Intervals;
+import org.apache.druid.java.util.common.StringUtils;
 import org.apache.druid.java.util.common.granularity.Granularities;
 import org.apache.druid.query.aggregation.AggregatorFactory;
 import org.apache.druid.query.aggregation.LongSumAggregatorFactory;
 import org.apache.druid.segment.indexing.DataSchema;
 import org.apache.druid.segment.indexing.granularity.UniformGranularitySpec;
+import org.apache.druid.segment.loading.DataSegmentPusher;
 import org.apache.druid.timeline.DataSegment;
 import org.apache.druid.timeline.partition.NoneShardSpec;
 import org.apache.hadoop.conf.Configuration;
@@ -41,6 +44,7 @@ import org.apache.hadoop.io.retry.RetryPolicies;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Progressable;
 import org.joda.time.Interval;
+import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -53,6 +57,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -221,6 +226,78 @@ public class JobHelperTest
     Assert.fail("Exception was not thrown for malicious zip file");
   }
 
+  @Test
+  public void testMakeFileNamePathHadoop() throws IOException
+  {
+    DataSegment segment = new DataSegment(
+            "test1",
+            Intervals.of("2000/3000"),
+            "ver",
+            ImmutableMap.of(
+                    "type", "google",
+                    "bucket", "test-test",
+                    "path", "tmp/foo:bar/index1.zip"
+            ),
+            ImmutableList.of(),
+            ImmutableList.of(),
+            NoneShardSpec.instance(),
+            9,
+            1024
+    );
+
+    Path result = JobHelper.makeFileNamePath(
+            new Path("foo", "bar"),
+            new Path("baz").getFileSystem(new Configuration()),
+            segment,
+            "boz",
+            new HdfsDataSegmentPusherStub()
+    );
+
+    String expected = String.format(
+            Locale.ENGLISH,
+            "file:%s/%s",
+            System.getProperty("user.dir"),
+            "foo/bar/test1/20000101T000000.000Z_30000101T000000.000Z/ver/0_boz"
+    );
+    Assert.assertEquals(expected, result.toString());
+  }
+
+  @Test
+  public void testMakeFileNamePathGeneric() throws IOException
+  {
+    DataSegment segment = new DataSegment(
+            "test1",
+            Intervals.of("2000/3000"),
+            "ver",
+            ImmutableMap.of(
+                    "type", "google",
+                    "bucket", "test-test",
+                    "path", "tmp/foo:bar/index1.zip"
+            ),
+            ImmutableList.of(),
+            ImmutableList.of(),
+            NoneShardSpec.instance(),
+            9,
+            1024
+    );
+
+    Path result = JobHelper.makeFileNamePath(
+            new Path("foo", "bar"),
+            new Path("baz").getFileSystem(new Configuration()),
+            segment,
+            "boz",
+            new GenericSegmentPusherStub()
+    );
+
+    String expected = String.format(
+            Locale.ENGLISH,
+            "file:%s/%s",
+            System.getProperty("user.dir"),
+            "foo/bar/test1/20000101T000000.000Z_30000101T000000.000Z/ver/boz"
+    );
+    Assert.assertEquals(expected, result.toString());
+  }
+
   private static class HadoopDruidIndexerConfigSpy extends HadoopDruidIndexerConfig
   {
 
@@ -244,6 +321,120 @@ public class JobHelperTest
     public Map<String, String> getJobProperties()
     {
       return jobProperties;
+    }
+  }
+
+  private class HdfsDataSegmentPusherStub implements DataSegmentPusher
+  {
+    @Override
+    public String getPathForHadoop(String dataSource)
+    {
+      return getPathForHadoop();
+    }
+
+    @Override
+    public String getPathForHadoop()
+    {
+      return "todo";
+    }
+
+    @Override
+    public DataSegment push(final File inDir, final DataSegment segment, final boolean useUniquePath)
+    {
+      return new DataSegment(
+              "test1",
+              Intervals.of("2000/3000"),
+              "ver",
+              ImmutableMap.of(
+                      "type", "google",
+                      "bucket", "test-test",
+                      "path", "tmp/foo:bar/index1.zip"
+              ),
+              ImmutableList.of(),
+              ImmutableList.of(),
+              NoneShardSpec.instance(),
+              9,
+              1024
+      );
+    }
+
+    @Override
+    public Map<String, Object> makeLoadSpec(URI finalIndexZipFilePath)
+    {
+      return ImmutableMap.of("type", "hdfs", "path", finalIndexZipFilePath.toString());
+    }
+
+    @Override
+    public String getStorageDir(DataSegment segment, boolean useUniquePath)
+    {
+      Preconditions.checkArgument(
+              !useUniquePath,
+              "useUniquePath must be false for HdfsDataSegmentPusher.getStorageDir()"
+      );
+
+      return JOINER.join(
+              segment.getDataSource(),
+              StringUtils.format(
+                      "%s_%s",
+                      segment.getInterval().getStart().toString(ISODateTimeFormat.basicDateTime()),
+                      segment.getInterval().getEnd().toString(ISODateTimeFormat.basicDateTime())
+              ),
+              segment.getVersion().replace(':', '_')
+      );
+    }
+
+    @Override
+    public String makeIndexPathName(DataSegment dataSegment, String indexName)
+    {
+      // This is only called from Hadoop batch which doesn't require unique segment paths so set useUniquePath=false
+      return StringUtils.format(
+              "./%s/%d_%s",
+              this.getStorageDir(dataSegment, false),
+              dataSegment.getShardSpec().getPartitionNum(),
+              indexName
+      );
+    }
+  }
+
+
+  private class GenericSegmentPusherStub implements DataSegmentPusher
+  {
+    @Override
+    public String getPathForHadoop(String dataSource)
+    {
+      return getPathForHadoop();
+    }
+
+    @Override
+    public String getPathForHadoop()
+    {
+      return "todo";
+    }
+
+    @Override
+    public DataSegment push(final File inDir, final DataSegment segment, final boolean useUniquePath)
+    {
+      return new DataSegment(
+              "test1",
+              Intervals.of("2000/3000"),
+              "ver",
+              ImmutableMap.of(
+                      "type", "google",
+                      "bucket", "test-test",
+                      "path", "tmp/foo:bar/index1.zip"
+              ),
+              ImmutableList.of(),
+              ImmutableList.of(),
+              NoneShardSpec.instance(),
+              9,
+              1024
+      );
+    }
+
+    @Override
+    public Map<String, Object> makeLoadSpec(URI finalIndexZipFilePath)
+    {
+      return ImmutableMap.of("type", "hdfs", "path", finalIndexZipFilePath.toString());
     }
   }
 }
