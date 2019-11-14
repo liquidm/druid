@@ -603,6 +603,31 @@ public class HadoopDruidIndexerConfig
     Preconditions.checkNotNull(schema.getTuningConfig().getVersion(), "version");
   }
 
+  @Override
+  public String toString()
+  {
+    return String.join(" ",
+      new String[]{
+          "dataSource:",
+          schema.getDataSchema().getDataSource(),
+          "parseSpec:",
+          schema.getDataSchema().getParser().getParseSpec().toString(),
+          "timestampSpec:",
+          schema.getDataSchema().getParser().getParseSpec().getTimestampSpec().toString(),
+          "granularitySpec:",
+          schema.getDataSchema().getGranularitySpec().toString(),
+          "inputSpec:",
+          pathSpec.toString(),
+          "workingPath:",
+          schema.getTuningConfig().getWorkingPath(),
+          "segmentOutputPath:",
+          schema.getIOConfig().getSegmentOutputPath(),
+          "version:",
+          schema.getTuningConfig().getVersion()
+      }
+    );
+  }
+
   public List<String> getAllowedHadoopPrefix()
   {
     return allowedHadoopPrefix;

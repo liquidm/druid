@@ -598,6 +598,7 @@ public class JobHelper
       DataSegmentPusher dataSegmentPusher
   )
   {
+    log.warn("makeFileNamePath with: %s", dataSegmentPusher.getClass().getName());
     return new Path(
         prependFSIfNullScheme(fs, basePath),
         dataSegmentPusher.makeIndexPathName(segmentTemplate, baseFileName)
@@ -612,6 +613,7 @@ public class JobHelper
       DataSegmentPusher dataSegmentPusher
   )
   {
+    log.warn("makeTmpPath with: %s", dataSegmentPusher.getClass().getName());
     return new Path(
         prependFSIfNullScheme(fs, basePath),
         StringUtils.format(

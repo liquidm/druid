@@ -70,6 +70,7 @@ public class HadoopDruidIndexerJob implements Jobby
     List<Jobby> jobs = new ArrayList<>();
     JobHelper.ensurePaths(config);
 
+    log.warn("starting job with config: %s", config.toString());
     indexJob = new IndexGeneratorJob(config);
     jobs.add(indexJob);
 
