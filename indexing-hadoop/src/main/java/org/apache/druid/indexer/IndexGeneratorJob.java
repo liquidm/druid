@@ -824,6 +824,7 @@ public class IndexGeneratorJob implements Jobby
             -1
         );
 
+        log.warn("serializing output with: %s", config.DATA_SEGMENT_PUSHER.getClass().getName());
         final DataSegment segment = JobHelper.serializeOutIndex(
             segmentTemplate,
             context.getConfiguration(),
