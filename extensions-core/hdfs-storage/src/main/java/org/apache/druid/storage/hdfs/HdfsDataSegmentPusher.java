@@ -114,7 +114,7 @@ public class HdfsDataSegmentPusher implements DataSegmentPusher
         segment.getDataSource(),
         UUIDUtils.generateUuid(),
         segment.getShardSpec().getPartitionNum()
-    ));
+    ).replace(':', '_'));
     FileSystem fs = tmpIndexFile.getFileSystem(hadoopConfig);
 
     fs.mkdirs(tmpIndexFile.getParent());
@@ -134,7 +134,7 @@ public class HdfsDataSegmentPusher implements DataSegmentPusher
           storageDir,
           segment.getShardSpec().getPartitionNum(),
           uniquePrefix
-      ));
+      ).replace(':', '_'));
 
       dataSegment = segment.withLoadSpec(makeLoadSpec(outIndexFile.toUri()))
                            .withSize(size)
