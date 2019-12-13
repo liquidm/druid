@@ -72,6 +72,11 @@ public class JdbcExtractionNamespace implements ExtractionNamespace
     this.tsColumn = tsColumn;
     this.filter = filter;
     this.pollPeriod = pollPeriod == null ? new Period(0L) : pollPeriod;
+
+    if connectorConfig.getConnectURI().startsWith("jdbc:postgresql")
+    {
+      Class.forName("org.postgresql.Driver");
+    }
   }
 
   public MetadataStorageConnectorConfig getConnectorConfig()
