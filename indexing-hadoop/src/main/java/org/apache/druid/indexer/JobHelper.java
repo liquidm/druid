@@ -312,11 +312,21 @@ public class JobHelper
     String mapJavaOpts = StringUtils.nullToEmptyNonDruidDataString(configuration.get(MRJobConfig.MAP_JAVA_OPTS));
     String reduceJavaOpts = StringUtils.nullToEmptyNonDruidDataString(configuration.get(MRJobConfig.REDUCE_JAVA_OPTS));
 
-    for (String propName : System.getProperties().stringPropertyNames()) {
+    for (String propName : HadoopDruidIndexerConfig.PROPERTIES.stringPropertyNames()) {
       for (String prefix : listOfAllowedPrefix) {
         if (propName.equals(prefix) || propName.startsWith(prefix + ".")) {
-          mapJavaOpts = StringUtils.format("%s -D%s=%s", mapJavaOpts, propName, System.getProperty(propName));
-          reduceJavaOpts = StringUtils.format("%s -D%s=%s", reduceJavaOpts, propName, System.getProperty(propName));
+          mapJavaOpts = StringUtils.format(
+              "%s -D%s=%s",
+              mapJavaOpts,
+              propName,
+              HadoopDruidIndexerConfig.PROPERTIES.getProperty(propName)
+          );
+          reduceJavaOpts = StringUtils.format(
+              "%s -D%s=%s",
+              reduceJavaOpts,
+              propName,
+              HadoopDruidIndexerConfig.PROPERTIES.getProperty(propName)
+          );
           break;
         }
       }
@@ -332,9 +342,9 @@ public class JobHelper
 
   public static Configuration injectSystemProperties(Configuration conf)
   {
-    for (String propName : System.getProperties().stringPropertyNames()) {
+    for (String propName : HadoopDruidIndexerConfig.PROPERTIES.stringPropertyNames()) {
       if (propName.startsWith("hadoop.")) {
-        conf.set(propName.substring("hadoop.".length()), System.getProperty(propName));
+        conf.set(propName.substring("hadoop.".length()), HadoopDruidIndexerConfig.PROPERTIES.getProperty(propName));
       }
     }
     return conf;
