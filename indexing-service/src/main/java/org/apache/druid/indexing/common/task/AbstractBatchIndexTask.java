@@ -221,6 +221,7 @@ public abstract class AbstractBatchIndexTask extends AbstractTask
         taskLockHelper = new TaskLockHelper(result.lockGranularity == LockGranularity.SEGMENT);
         return tryLockWithDetermineResult(client, result);
       } else {
+        taskLockHelper = new TaskLockHelper(false);
         return true;
       }
     }
